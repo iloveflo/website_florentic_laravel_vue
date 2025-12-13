@@ -6,7 +6,7 @@
         <button class="btn-close-popup" @click="closePopup">✕</button>
 
         <div class="popup-body text-center">
-          <div class="sale-badge">Hello CI/CD - Version 2</div>
+          <div class="sale-badge">Hello CI/CD - Version 2 ngon rồi heheheheheh</div>
           
           <h2 class="popup-title">NHẬN ƯU ĐÃI NGAY</h2>
           

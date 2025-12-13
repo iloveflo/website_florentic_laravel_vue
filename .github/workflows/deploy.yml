@@ -24,3 +24,6 @@ jobs:
           file: ./Dockerfile  # Đảm bảo Dockerfile nằm ở thư mục gốc
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/my-laravel-app:tagname
+      
+      - name: Trigger Render Deploy
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
