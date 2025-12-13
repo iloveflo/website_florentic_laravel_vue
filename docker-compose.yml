@@ -1,0 +1,38 @@
+services:
+  # 1. Container Web (Laravel + Vue đã build)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my_web_app
+    restart: unless-stopped
+    ports:
+      - "8000:80"  # Truy cập web qua http://localhost:8000
+    depends_on:
+      - db
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: laravel_app
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+      APP_KEY: base64:tmuj+gxMoWqDcSqdCbxJe9xVpEonDlfx72CvVVTJonE= # Nhớ thay key thật
+      APP_ENV: production
+      APP_DEBUG: "false"
+
+  # 2. Container Database
+  db:
+    image: mysql:8.0
+    container_name: my_mysql_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: laravel_app
+    volumes:
+      - db_data:/var/lib/mysql
+      # Tự động chạy file init.sql khi khởi tạo lần đầu
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db_data:
