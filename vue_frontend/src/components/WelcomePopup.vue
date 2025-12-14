@@ -8,7 +8,7 @@
         <div class="popup-body text-center">
           <div class="sale-badge">FLASH SALE</div>
           
-          <h2 class="popup-title">Test CI/CD </h2>
+          <h2 class="popup-title">NHẬN ƯU ĐÃI NGAY</h2>
           
           <p class="popup-desc">
             {{ coupon.description || 'Chương trình khuyến mại đặc biệt dành riêng cho bạn.' }}
