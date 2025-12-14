@@ -1,31 +1,22 @@
 <template>
   <div class="product-details-page" v-if="product">
-    <!-- Top Section -->
     <div class="top-section">
-      <!-- Images -->
       <div class="image-section">
-        <!-- ẢNH CHÍNH + ZOOM -->
         <div class="main-image-container" @mousemove="onMouseMoveZoom" @mouseenter="startZoom" @mouseleave="stopZoom">
           <div class="main-image-wrapper">
-            <!-- EFFECT SLIDE + ZOOM -->
             <transition :name="slideDirection">
               <img :key="mainImage" :src="mainImage" alt="" class="main-image" :class="{ 'is-zooming': isZooming }"
                 :style="zoomStyle" />
             </transition>
           </div>
-
-          <!-- lens zoom nếu bạn đang dùng -->
-          <!-- <div v-if="isZooming" class="zoom-lens" :style="zoomLensStyle"></div>-->
         </div>
 
-        <!-- ẢNH NHỎ -->
         <div class="thumb-list">
           <img v-for="(img, index) in validImages" :key="img.id || index" :src="getImageSrc(img)" class="thumb"
             :class="{ active: index === currentImageIndex }" @click="changeImage(index)" />
         </div>
       </div>
 
-      <!-- Product Info -->
       <div class="info-section">
         <h2 class="title">{{ product.name }}</h2>
 
@@ -38,7 +29,6 @@
           </span>
         </div>
 
-        <!-- Sizes -->
         <div class="section-block" v-if="sizeOptions.length">
           <h4>Kích thước</h4>
           <div class="size-list">
@@ -49,7 +39,6 @@
           </div>
         </div>
 
-        <!-- Colors -->
         <div class="section-block" v-if="colorOptions.length">
           <h4>Màu sắc</h4>
           <div class="color-list">
@@ -59,7 +48,6 @@
           </div>
         </div>
 
-        <!-- Quantity -->
         <div class="section-block">
           <h4>Số lượng</h4>
           <div class="qty-box">
@@ -69,14 +57,11 @@
           </div>
         </div>
 
-        <!-- Add to Cart -->
         <button class="add-cart-btn" @click="addToCart" :disabled="isAdding" :class="{ 'disabled-btn': isAdding }">
           <span v-if="isAdding">Đang xử lý...</span>
           <span v-else>Thêm vào giỏ hàng</span>
         </button>
-        <!-- ACCORDION THÔNG TIN SẢN PHẨM -->
         <div class="product-accordion">
-          <!-- MÔ TẢ -->
           <div class="accordion-section">
             <button class="accordion-header" @click="openDesc = !openDesc">
               <span>Mô tả</span>
@@ -89,7 +74,6 @@
             </div>
           </div>
 
-          <!-- CHẤT LIỆU -->
           <div class="accordion-section">
             <button class="accordion-header" @click="openMaterial = !openMaterial">
               <span>Chất liệu</span>
@@ -100,7 +84,6 @@
             </div>
           </div>
 
-          <!-- HƯỚNG DẪN SỬ DỤNG -->
           <div class="accordion-section">
             <button class="accordion-header" @click="openUsage = !openUsage">
               <span>Hướng dẫn sử dụng</span>
@@ -119,10 +102,8 @@
           </div>
         </div>
 
-        <!-- CHÍNH SÁCH MUA HÀNG -->
         <div class="purchase-policy">
           <div class="policy-item">
-            <!-- thay src icon bằng ảnh của bạn nếu có -->
             <div class="policy-icon-circle">💳</div>
             <div>
               <strong>Thanh toán khi nhận hàng (COD)</strong><br />
@@ -150,28 +131,45 @@
       </div>
     </div>
 
-    <!-- Reviews -->
     <div class="reviews-section">
       <h3>Đánh giá sản phẩm</h3>
 
-      <div v-if="product.reviews?.length > 0">
-        <div v-for="rv in product.reviews" :key="rv.id" class="review-card">
+      <div v-if="isLoadingReviews">Đang tải đánh giá...</div>
+
+      <div v-else-if="reviewsData && reviewsData.data && reviewsData.data.length > 0">
+        <div v-for="rv in reviewsData.data" :key="rv.id" class="review-card">
           <div class="star-rating">
-            <span v-for="star in 5" :key="star" class="star" :class="{ filled: star <= Math.round(rv.rating) }">
+            <span v-for="star in 5" :key="star" class="star" :class="{ filled: star <= Math.round(rv.rating || 5) }">
               ★
             </span>
           </div>
 
-          <strong>{{ rv.customer_name || 'Người dùng' }}</strong>
+          <strong>{{ rv.order?.full_name || rv.customer_name || 'Khách hàng ẩn danh' }}</strong>
+
+          <div class="review-date">{{ formatDate(rv.created_at) }}</div>
           <p>{{ rv.comment }}</p>
+        </div>
+
+        <div class="pagination-controls" v-if="reviewsData.last_page > 1">
+          <button @click="changePage(reviewsData.current_page - 1)" :disabled="reviewsData.current_page === 1"
+            class="btn-page">
+            &laquo;< </button>
+
+              <span class="page-info">
+                Trang {{ reviewsData.current_page }} / {{ reviewsData.last_page }}
+              </span>
+
+              <button @click="changePage(reviewsData.current_page + 1)"
+                :disabled="reviewsData.current_page === reviewsData.last_page" class="btn-page">
+                >&raquo;
+              </button>
         </div>
       </div>
 
       <div v-else>
-        <p>Chưa có đánh giá nào.</p>
+        <p>Chưa có đánh giá nào cho sản phẩm này.</p>
       </div>
     </div>
-    <!-- ============= RELATED PRODUCTS SLIDER ============= -->
     <div v-if="relatedProducts.length" class="related-section">
       <div class="related-header">
         <h3>Sản phẩm cùng phong cách</h3>
@@ -184,7 +182,6 @@
       <div class="related-slider" @mouseenter="stopRelatedAutoSlide" @mouseleave="startRelatedAutoSlide">
         <div class="related-track" :style="{ transform: `translateX(-${relatedSlide * 100}%)` }">
 
-          <!-- Mỗi page là 1 “hàng” giống products-grid -->
           <div class="related-page" v-for="pageIndex in relatedTotalPages" :key="pageIndex">
             <div class="products-grid related-grid">
               <div v-for="card in relatedProducts.slice(
@@ -222,19 +219,16 @@
                   </div>
                 </div>
               </div>
-            </div> <!-- end .products-grid -->
-          </div> <!-- end .related-page -->
-
-        </div> <!-- end .related-track -->
-      </div> <!-- end .related-slider -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- QUICK VIEW MODAL (SẢN PHẨM LIÊN QUAN) -->
     <div v-if="showQuickView && quickViewProduct" class="modal-overlay" @click.self="closeQuickView">
       <div class="modal">
         <button class="modal-close" @click="closeQuickView">×</button>
 
         <div class="modal-body">
-          <!-- Cột ảnh -->
           <div class="modal-image">
             <img :src="quickMainImage" :alt="quickViewProduct.name" class="modal-main-image" @error="replaceImage" />
 
@@ -245,7 +239,6 @@
             </div>
           </div>
 
-          <!-- Cột thông tin -->
           <div class="modal-info">
             <h2 class="modal-title">{{ quickViewProduct.name }}</h2>
 
@@ -317,7 +310,6 @@
         </div>
       </div>
     </div>
-    <!-- TOAST THÔNG BÁO GIỮA MÀN HÌNH -->
     <transition name="toast-fade">
       <div v-if="isToastVisible" class="center-toast">
         {{ toastMessage }}
@@ -325,7 +317,6 @@
     </transition>
   </div>
 
-  <!-- Loading -->
   <div v-else class="loading">Đang tải sản phẩm...</div>
 </template>
 
@@ -334,101 +325,174 @@ import { ref, onMounted, computed, onBeforeUnmount, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 
-
 const route = useRoute();
 const router = useRouter();
-const slug = route.params.slug;
 
+// ================= STATE =================
 const product = ref(null);
+const reviewsData = ref(null); // [NEW] Chứa data review phân trang
+const isLoadingReviews = ref(false); // [NEW] Loading cho phần review
+
 const mainImage = ref("");
 const selectedSize = ref("");
 const selectedColor = ref("");
 const quantity = ref(1);
-const isAdding = ref(false); // Trạng thái loading của nút
-//Chính sách, hướng dẫn sử dụng
-const openDesc = ref(true);       // mở sẵn phần mô tả
-const openMaterial = ref(false);  // đóng mặc định
-const openUsage = ref(false);     // đóng mặc định
-//Zoom ảnh
-// ============= ZOOM ẢNH =============
+const isAdding = ref(false);
+
+// Chính sách, hướng dẫn
+const openDesc = ref(true);
+const openMaterial = ref(false);
+const openUsage = ref(false);
+
+// Zoom ảnh
 const isZooming = ref(false)
 const zoomOrigin = ref('50% 50%')
 
-// style áp cho ảnh chính khi zoom
-const zoomStyle = computed(() => {
-  if (!isZooming.value) return {}
-  return {
-    transform: 'scale(1.8)',      // mức độ zoom
-    transformOrigin: zoomOrigin.value,
+// ================= API CALLS =================
+
+/**
+ * [EDIT] Hàm lấy chi tiết sản phẩm + reviews
+ * Thêm tham số page, mặc định = 1
+ */
+const fetchProduct = async (slugValue, page = 1) => {
+  isLoadingReviews.value = true;
+  try {
+    // Gọi API. Lưu ý endpoint nên là /api/products/ nếu bạn cấu hình route api
+    const res = await axios.get(`/products/${slugValue}?page=${page}`);
+    const data = res.data;
+
+    // [EDIT] Tách dữ liệu theo cấu trúc mới của Controller
+    product.value = data.product;
+    reviewsData.value = data.reviews; // Gán object reviews riêng
+
+    // Chỉ reset ảnh chính khi load trang đầu tiên (đổi sản phẩm)
+    // Nếu chỉ chuyển trang review thì không cần reset ảnh
+    if (page === 1) {
+      if (product.value && product.value.images && product.value.images.length) {
+        const main = product.value.images.find((img) => img.is_primary) || product.value.images[0];
+        mainImage.value = getImageSrc(main);
+        currentImageIndex.value = product.value.images.findIndex((i) => i.id === main.id);
+      } else if (data.primary_image) {
+        mainImage.value = getImageSrc({ image_path: data.primary_image });
+      } else {
+        mainImage.value = "/placeholder.jpg";
+      }
+
+      // Reset các lựa chọn
+      selectedSize.value = "";
+      selectedColor.value = "";
+      quantity.value = 1;
+      isZooming.value = false;
+
+      // Related Products
+      relatedProducts.value = data.related_products || [];
+      relatedSlide.value = 0;
+      startRelatedAutoSlide();
+    }
+
+  } catch (err) {
+    console.error("Lỗi tải sản phẩm:", err);
+  } finally {
+    isLoadingReviews.value = false;
   }
-})
+};
 
-const startZoom = () => {
-  isZooming.value = true
-}
+/**
+ * [NEW] Hàm chuyển trang Review
+ */
+const changePage = (page) => {
+  if (!reviewsData.value || page < 1 || page > reviewsData.value.last_page) return;
 
-const stopZoom = () => {
-  isZooming.value = false
-}
+  // Gọi lại API fetchProduct với page mới
+  // Slug lấy từ route params hoặc từ product hiện tại
+  const currentSlug = route.params.slug;
+  fetchProduct(currentSlug, page);
 
-const onMouseMoveZoom = (e) => {
-  if (!isZooming.value) return
+  // Cuộn nhẹ xuống phần review
+  const reviewSection = document.querySelector('.reviews-section');
+  if (reviewSection) {
+    reviewSection.scrollIntoView({ behavior: 'smooth' });
+  }
+};
 
-  const rect = e.currentTarget.getBoundingClientRect()
-  const x = ((e.clientX - rect.left) / rect.width) * 100
-  const y = ((e.clientY - rect.top) / rect.height) * 100
+// ================= LIFECYCLE =================
+onMounted(() => {
+  if (route.params.slug) {
+    fetchProduct(route.params.slug);
+  }
+});
 
-  zoomOrigin.value = `${x}% ${y}%`
-}
+watch(
+  () => route.params.slug,
+  (newSlug, oldSlug) => {
+    if (newSlug && newSlug !== oldSlug) {
+      // Khi đổi sản phẩm, load lại từ trang 1
+      fetchProduct(newSlug, 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+);
 
-// ================== HELPER ẢNH ==================
+// ================= HELPERS =================
+
+// [NEW] Hàm format ngày (Sửa lỗi _ctx.formatDate)
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('vi-VN');
+};
+
+const formatPrice = (price) =>
+  Number(price).toLocaleString("vi-VN") + "₫";
+
 const getImageSrc = (img) => {
-  if (!img) return "/placeholder.jpg"; // nhớ có file này trong /public
-
-  // Nếu backend có field url
+  if (!img) return "/placeholder.jpg";
   if (img.url) return img.url;
-
   if (img.image_path) {
-    // Trường hợp đã là full URL
     if (img.image_path.startsWith("http")) return img.image_path;
-
-    // Nếu đã có / ở đầu
     if (img.image_path.startsWith("/")) return img.image_path;
-
-    // Còn lại: thêm /storage/ cho path tương đối
     return `/storage/${img.image_path}`;
   }
-
   return "/placeholder.jpg";
 };
-// Lọc ra chỉ những ảnh có path hợp lệ
+
 const validImages = computed(() =>
   (product.value?.images || []).filter(
     (img) => img && (img.image_path || img.url)
   )
 );
-// Trượt ảnh
-const currentImageIndex = ref(0)
-const slideDirection = ref('slide-left') // mặc định
 
-// Đổi ảnh + set hướng trượt
+// ... Các hàm logic khác giữ nguyên ...
+
+const zoomStyle = computed(() => {
+  if (!isZooming.value) return {}
+  return {
+    transform: 'scale(1.8)',
+    transformOrigin: zoomOrigin.value,
+  }
+})
+
+const startZoom = () => { isZooming.value = true }
+const stopZoom = () => { isZooming.value = false }
+
+const onMouseMoveZoom = (e) => {
+  if (!isZooming.value) return
+  const rect = e.currentTarget.getBoundingClientRect()
+  const x = ((e.clientX - rect.left) / rect.width) * 100
+  const y = ((e.clientY - rect.top) / rect.height) * 100
+  zoomOrigin.value = `${x}% ${y}%`
+}
+
+const currentImageIndex = ref(0)
+const slideDirection = ref('slide-left')
+
 const changeImage = (newIndex) => {
   const imgs = validImages.value;
   if (!imgs.length) return;
   if (newIndex === currentImageIndex.value) return;
-
-  // Xác định hướng: sang phải -> slide-left, sang trái -> slide-right
-  slideDirection.value =
-    newIndex > currentImageIndex.value ? "slide-left" : "slide-right";
-
+  slideDirection.value = newIndex > currentImageIndex.value ? "slide-left" : "slide-right";
   currentImageIndex.value = newIndex;
   mainImage.value = getImageSrc(imgs[newIndex]);
 };
-
-// --- Helper Functions ---
-
-const formatPrice = (price) =>
-  Number(price).toLocaleString("vi-VN") + "₫";
 
 const isSale = computed(() => {
   if (!product.value) return false;
@@ -436,189 +500,98 @@ const isSale = computed(() => {
   return Number(product.value.sale_price) < Number(product.value.price);
 });
 
-// Lấy session_id cho khách vãng lai
 const getSessionId = () => {
   let sessionId = localStorage.getItem("cart_session_id");
   if (!sessionId) {
-    sessionId =
-      "sess_" + Math.random().toString(36).substr(2, 9) + Date.now();
+    sessionId = "sess_" + Math.random().toString(36).substr(2, 9) + Date.now();
     localStorage.setItem("cart_session_id", sessionId);
   }
   return sessionId;
 };
 
-// SIZE options (ưu tiên từ variants, fallback sizes)
+// SIZE & COLOR OPTIONS
 const sizeOptions = computed(() => {
   if (!product.value) return [];
-
-  // Ưu tiên variants
   if (product.value.variants && product.value.variants.length) {
     const s = new Set();
     product.value.variants.forEach((v) => v.size && s.add(v.size));
     return Array.from(s);
   }
-
-  // Fallback: dùng quan hệ sizes cũ nếu có
   if (product.value.sizes && product.value.sizes.length) {
     const s = new Set();
     product.value.sizes.forEach((v) => v.size && s.add(v.size));
     return Array.from(s);
   }
-
   return [];
 });
 
-// COLOR options (ưu tiên từ variants, fallback colors)
 const colorOptions = computed(() => {
   if (!product.value) return [];
-
-  // Ưu tiên variants
   if (product.value.variants && product.value.variants.length) {
     const map = new Map();
     product.value.variants.forEach((v) => {
       const key = v.color_name || v.color_code;
       if (!key) return;
-      if (!map.has(key)) {
-        map.set(key, {
-          name: v.color_name,
-          code: v.color_code,
-        });
-      }
+      if (!map.has(key)) map.set(key, { name: v.color_name, code: v.color_code });
     });
     return Array.from(map.values());
   }
-
-  // Fallback: dùng colors cũ
   if (product.value.colors && product.value.colors.length) {
     const map = new Map();
     product.value.colors.forEach((c) => {
       const key = c.color_name || c.color_code;
       if (!key) return;
-      if (!map.has(key)) {
-        map.set(key, {
-          name: c.color_name,
-          code: c.color_code,
-        });
-      }
+      if (!map.has(key)) map.set(key, { name: c.color_name, code: c.color_code });
     });
     return Array.from(map.values());
   }
-
   return [];
 });
 
-// --- API Calls ---
+const replaceImage = (e) => { e.target.src = '/placeholder.jpg' }
+const increaseQty = () => { quantity.value++; };
+const decreaseQty = () => { if (quantity.value > 1) quantity.value--; };
 
-// 1. Lấy chi tiết sản phẩm
-// --- HÀM DÙNG CHUNG ĐỂ LOAD SẢN PHẨM THEO SLUG ---
-const fetchProduct = async (slugValue) => {
-  try {
-    const res = await axios.get(`/products/${slugValue}`);
-
-    const payload = res.data.product || res.data;
-    product.value = payload;
-
-    // Set ảnh chính
-    if (product.value && product.value.images && product.value.images.length) {
-      const main =
-        product.value.images.find((img) => img.is_primary) ||
-        product.value.images[0];
-
-      mainImage.value = getImageSrc(main);
-      currentImageIndex.value = product.value.images.findIndex(
-        (i) => i.id === main.id
-      );
-    } else if (res.data.primary_image) {
-      mainImage.value = getImageSrc({ image_path: res.data.primary_image });
-    } else {
-      mainImage.value = "/placeholder.jpg";
-    }
-
-    // LẤY SẢN PHẨM LIÊN QUAN
-    relatedProducts.value = res.data.related_products || [];
-
-    // reset slider & auto slide
-    relatedSlide.value = 0;
-    startRelatedAutoSlide();
-
-    // reset lựa chọn
-    selectedSize.value = "";
-    selectedColor.value = "";
-    quantity.value = 1;
-    isZooming.value = false;
-  } catch (err) {
-    console.error("Lỗi tải sản phẩm:", err);
+// CART LOGIC
+const getAvailableStock = (p, size, color) => {
+  if (!p) return null
+  if (p.variants && p.variants.length) {
+    const variant = p.variants.find(v => {
+      const sameSize = !size || v.size === size
+      const sameColor = !color || v.color_name === color || v.color_code === color
+      return sameSize && sameColor
+    })
+    if (!variant) return 0
+    return Number(variant.quantity ?? 0)
   }
-};
-// 1. Lần đầu vào component
-onMounted(() => {
-  fetchProduct(route.params.slug);
-});
-// 2. Khi chuyển sang sản phẩm khác nhưng vẫn cùng component (/product/:slug -> /product/:slug)
-watch(
-  () => route.params.slug,
-  (newSlug, oldSlug) => {
-    if (newSlug && newSlug !== oldSlug) {
-      fetchProduct(newSlug);
-      // cuộn lên đầu trang cho giống reload
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  if (typeof p.stock_quantity !== 'undefined') {
+    return Number(p.stock_quantity)
   }
-);
-
-
-const replaceImage = (e) => {
-  e.target.src = '/placeholder.jpg'
+  return null
 }
 
-const increaseQty = () => {
-  quantity.value++;
-};
-
-const decreaseQty = () => {
-  if (quantity.value > 1) quantity.value--;
-};
-
-// 2. Hàm Thêm vào giỏ hàng
 const addToCart = async () => {
   if (!product.value) return
 
-  // Kiểm tra Size (nếu có)
   if (sizeOptions.value.length > 0 && !selectedSize.value) {
     showToast("Vui lòng chọn kích thước!")
     return
   }
-
-  // Kiểm tra Màu (nếu có)
   if (colorOptions.value.length > 0 && !selectedColor.value) {
     showToast("Vui lòng chọn màu sắc!")
     return
   }
 
-  // Kiểm tra tồn kho
-  const stock = getAvailableStock(
-    product.value,
-    selectedSize.value || null,
-    selectedColor.value || null
-  )
-
+  const stock = getAvailableStock(product.value, selectedSize.value, selectedColor.value)
   if (stock !== null) {
-    if (stock <= 0) {
-      showToast("Sản phẩm hiện đã hết hàng!")
-      return
-    }
-    if (quantity.value > stock) {
-      showToast(`Kho chỉ còn ${stock} sản phẩm!`)
-      return
-    }
+    if (stock <= 0) { showToast("Sản phẩm hiện đã hết hàng!"); return }
+    if (quantity.value > stock) { showToast(`Kho chỉ còn ${stock} sản phẩm!`); return }
   }
 
   isAdding.value = true
-
   try {
     const token = localStorage.getItem("token")
     const sessionId = getSessionId()
-
     const payload = {
       product_id: product.value.id,
       quantity: quantity.value,
@@ -626,21 +599,16 @@ const addToCart = async () => {
       color: selectedColor.value || null,
       session_id: sessionId,
     }
-
     const config = { headers: {} }
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`
-    }
+    if (token) config.headers["Authorization"] = `Bearer ${token}`
 
-    const response = await axios.post(`/cart/add`, payload, config)
+    const response = await axios.post(`/cart/add`, payload, config) // [EDIT] /api/
 
     if (response.status === 200 || response.status === 201) {
       showToast("Đã thêm sản phẩm vào giỏ hàng!")
-
       if (response.data.data?.session_id) {
         localStorage.setItem("cart_session_id", response.data.data.session_id)
       }
-
       window.dispatchEvent(new Event("cart-updated"))
     }
   } catch (error) {
@@ -651,13 +619,11 @@ const addToCart = async () => {
   }
 }
 
-// Sản phẩm liên quan 
+// RELATED PRODUCTS SLIDER
 const relatedProducts = ref([]);
-
-// slider cấu hình
-const relatedPerPage = 4;              // 4 thẻ / trang
-const relatedSlide = ref(0);           // trang hiện tại (0,1,2…)
-const relatedIntervalId = ref(null);   // id setInterval
+const relatedPerPage = 4;
+const relatedSlide = ref(0);
+const relatedIntervalId = ref(null);
 
 const relatedTotalPages = computed(() => {
   if (!relatedProducts.value.length) return 0;
@@ -666,11 +632,10 @@ const relatedTotalPages = computed(() => {
 
 const startRelatedAutoSlide = () => {
   stopRelatedAutoSlide();
-  if (relatedTotalPages.value <= 1) return; // ít hơn/equal 1 page thì khỏi slide
-
+  if (relatedTotalPages.value <= 1) return;
   relatedIntervalId.value = setInterval(() => {
     relatedSlide.value = (relatedSlide.value + 1) % relatedTotalPages.value;
-  }, 4000); // 4 giây trượt 1 lần
+  }, 4000);
 };
 
 const stopRelatedAutoSlide = () => {
@@ -683,13 +648,12 @@ const stopRelatedAutoSlide = () => {
 const nextRelated = () => {
   if (relatedTotalPages.value <= 1) return;
   relatedSlide.value = (relatedSlide.value + 1) % relatedTotalPages.value;
-  startRelatedAutoSlide(); // reset timer
+  startRelatedAutoSlide();
 };
 
 const prevRelated = () => {
   if (relatedTotalPages.value <= 1) return;
-  relatedSlide.value =
-    (relatedSlide.value - 1 + relatedTotalPages.value) % relatedTotalPages.value;
+  relatedSlide.value = (relatedSlide.value - 1 + relatedTotalPages.value) % relatedTotalPages.value;
   startRelatedAutoSlide();
 };
 
@@ -698,22 +662,12 @@ onBeforeUnmount(() => {
   if (toastTimerId) clearTimeout(toastTimerId)
 })
 
-// Đi tới trang chi tiết sản phẩm liên quan
 const gotoRelatedDetail = (p) => {
-  if (!p || !p.slug) {
-    console.log("Không có slug ở sản phẩm liên quan:", p);
-    return;
-  }
-
-  router.push({
-    name: "product-details",
-    params: { slug: p.slug },
-  });
+  if (!p || !p.slug) return;
+  router.push({ name: "product-details", params: { slug: p.slug } });
 };
 
-// ... các ref khác
-
-// ========== QUICK VIEW LIÊN QUAN ==========
+// QUICK VIEW
 const showQuickView = ref(false);
 const quickViewProduct = ref(null);
 const quickMainImage = ref("");
@@ -725,14 +679,12 @@ const showFullDescQuick = ref(false);
 
 const openQuickView = async (card) => {
   try {
-    const res = await axios.get(`/products/${card.slug}`);
+    const res = await axios.get(`/products/${card.slug}`); // [EDIT] /api/
     const data = res.data.product || res.data;
-
     quickViewProduct.value = data;
-    // ảnh chính
+
     if (data.images?.length) {
-      const main =
-        data.images.find((i) => i.is_primary) || data.images[0];
+      const main = data.images.find((i) => i.is_primary) || data.images[0];
       quickMainImage.value = getImageSrc(main);
     } else if (res.data.primary_image) {
       quickMainImage.value = getImageSrc({ image_path: res.data.primary_image });
@@ -740,23 +692,18 @@ const openQuickView = async (card) => {
       quickMainImage.value = "/placeholder.jpg";
     }
 
-    // reset lựa chọn
     quickSelectedSize.value = "";
     quickSelectedColor.value = "";
     quickQuantity.value = 1;
     showFullDescQuick.value = false;
-
     showQuickView.value = true;
   } catch (e) {
     console.error("Lỗi load xem nhanh:", e);
   }
 };
 
-const closeQuickView = () => {
-  showQuickView.value = false;
-};
+const closeQuickView = () => { showQuickView.value = false; };
 
-// size/màu cho quick view (dùng lại logic variants)
 const quickSizeOptions = computed(() => {
   const p = quickViewProduct.value;
   if (!p) return [];
@@ -776,61 +723,34 @@ const quickColorOptions = computed(() => {
     p.variants.forEach((v) => {
       const key = v.color_name || v.color_code;
       if (!key) return;
-      if (!map.has(key)) {
-        map.set(key, { name: v.color_name, code: v.color_code });
-      }
+      if (!map.has(key)) map.set(key, { name: v.color_name, code: v.color_code });
     });
     return Array.from(map.values());
   }
   return [];
 });
 
-const increaseQuickQty = () => {
-  quickQuantity.value++;
-};
-const decreaseQuickQty = () => {
-  if (quickQuantity.value > 1) quickQuantity.value--;
-};
+const increaseQuickQty = () => { quickQuantity.value++; };
+const decreaseQuickQty = () => { if (quickQuantity.value > 1) quickQuantity.value--; };
 
 const addQuickToCart = async () => {
   if (!quickViewProduct.value) return
-
-  // Kiểm tra Size (nếu có)
   if (quickSizeOptions.value.length && !quickSelectedSize.value) {
-    showToast("Vui lòng chọn kích thước!")
-    return
+    showToast("Vui lòng chọn kích thước!"); return
   }
-
-  // Kiểm tra Màu (nếu có)
   if (quickColorOptions.value.length && !quickSelectedColor.value) {
-    showToast("Vui lòng chọn màu sắc!")
-    return
+    showToast("Vui lòng chọn màu sắc!"); return
   }
-
-  // Kiểm tra tồn kho
-  const stock = getAvailableStock(
-    quickViewProduct.value,
-    quickSelectedSize.value || null,
-    quickSelectedColor.value || null
-  )
-
+  const stock = getAvailableStock(quickViewProduct.value, quickSelectedSize.value, quickSelectedColor.value)
   if (stock !== null) {
-    if (stock <= 0) {
-      showToast("Sản phẩm hiện đã hết hàng!")
-      return
-    }
-    if (quickQuantity.value > stock) {
-      showToast(`Kho chỉ còn ${stock} sản phẩm!`)
-      return
-    }
+    if (stock <= 0) { showToast("Hết hàng!"); return }
+    if (quickQuantity.value > stock) { showToast(`Còn ${stock} sp!`); return }
   }
 
   addingQuick.value = true
-
   try {
     const token = localStorage.getItem("token")
     const sessionId = getSessionId()
-
     const payload = {
       product_id: quickViewProduct.value.id,
       quantity: quickQuantity.value,
@@ -838,45 +758,30 @@ const addQuickToCart = async () => {
       color: quickSelectedColor.value || null,
       session_id: sessionId,
     }
-
     const config = { headers: {} }
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`
-    }
+    if (token) config.headers["Authorization"] = `Bearer ${token}`
 
     const response = await axios.post(`/cart/add`, payload, config)
-
     if (response.status === 200 || response.status === 201) {
-      showToast("Đã thêm sản phẩm vào giỏ hàng!")
-
-      if (response.data.data?.session_id) {
-        localStorage.setItem("cart_session_id", response.data.data.session_id)
-      }
-
+      showToast("Đã thêm vào giỏ hàng!")
+      if (response.data.data?.session_id) localStorage.setItem("cart_session_id", response.data.data.session_id)
       window.dispatchEvent(new Event("cart-updated"))
       showQuickView.value = false
     }
   } catch (error) {
-    console.error("Lỗi thêm giỏ hàng (xem nhanh):", error)
-    showToast("Có lỗi khi thêm vào giỏ hàng!")
+    showToast("Lỗi thêm giỏ hàng!")
   } finally {
     addingQuick.value = false
   }
-}
-
+};
 
 const gotoDetailFromQuick = () => {
   if (!quickViewProduct.value?.slug) return;
-
-  router.push({
-    name: "product-details",
-    params: { slug: quickViewProduct.value.slug },
-  });
-
+  router.push({ name: "product-details", params: { slug: quickViewProduct.value.slug } });
   showQuickView.value = false;
 };
 
-// ========== TOAST ========== 
+// TOAST
 const isToastVisible = ref(false)
 const toastMessage = ref('')
 let toastTimerId = null
@@ -884,40 +789,13 @@ let toastTimerId = null
 const showToast = (msg) => {
   toastMessage.value = msg
   isToastVisible.value = true
-
   if (toastTimerId) clearTimeout(toastTimerId)
   toastTimerId = setTimeout(() => {
     isToastVisible.value = false
-  }, 2200) // 2.2s tự ẩn
-}
-
-// Lấy tồn kho theo size + màu (nếu có variants)
-const getAvailableStock = (p, size, color) => {
-  if (!p) return null
-
-  // Có bảng variants: product.variants
-  if (p.variants && p.variants.length) {
-    const variant = p.variants.find(v => {
-      const sameSize = !size || v.size === size
-      const sameColor = !color || v.color_name === color || v.color_code === color
-      return sameSize && sameColor
-    })
-
-    if (!variant) return 0 // tổ hợp size/màu không tồn tại
-    return Number(variant.quantity ?? 0)
-  }
-
-  // Nếu bạn có field tổng như stock_quantity:
-  if (typeof p.stock_quantity !== 'undefined') {
-    return Number(p.stock_quantity)
-  }
-
-  // Không biết tồn kho -> bỏ qua kiểm tra
-  return null
+  }, 2200)
 }
 
 </script>
-
 <style scoped>
 /* ================================
    MINIMALIST BLACK & WHITE THEME
@@ -1290,13 +1168,15 @@ const getAvailableStock = (p, size, color) => {
 
 .star {
   font-size: 18px;
-  color: #d1d5db; /* Màu xám cho sao rỗng (chưa được chọn) */
+  color: #d1d5db;
+  /* Màu xám cho sao rỗng (chưa được chọn) */
   margin-right: 2px;
 }
 
 /* Class này được Vue thêm vào nếu star <= rating */
 .star.filled {
-  color: #f59e0b; /* Màu vàng cam cho sao đã chọn */
+  color: #f59e0b;
+  /* Màu vàng cam cho sao đã chọn */
 }
 
 .review-card:hover {
@@ -1326,6 +1206,59 @@ const getAvailableStock = (p, size, color) => {
   padding: 3px 10px;
   background: #f5eeee;
   color: #121212;
+}
+
+
+.star-rating .star {
+  color: #ddd;
+  font-size: 18px;
+}
+
+.star-rating .star.filled {
+  color: #ffc107;
+  /* Màu vàng */
+}
+
+.review-date {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 5px;
+}
+
+/* PHẦN NÚT PHÂN TRANG */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-page {
+  padding: 8px 16px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-page:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  border-color: #999;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #eee;
+}
+
+.page-info {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
 }
 
 /* ================================
