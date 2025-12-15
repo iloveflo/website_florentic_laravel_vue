@@ -21,11 +21,10 @@
                     <input 
                         type="file" 
                         ref="fileInput" 
-                        style="display: none" 
-                        accept="image/jpeg, image/png, image/jpg" 
+                        style="display: none"  
                         @change="handleFileUpload"
                     >
-                    <p class="file-hint">Dụng lượng file tối đa 2 MB<br>Định dạng: .JPEG, .PNG</p>
+                    <p class="file-hint">Dụng lượng file tối đa 2 MB<br>Định dạng:.PNG, .jpg</p>
                 </div>
             </div>
           </div>

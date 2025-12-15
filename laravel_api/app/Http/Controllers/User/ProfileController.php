@@ -52,12 +52,12 @@ class ProfileController extends Controller
             'full_name' => 'required|string|max:100',
             'phone'     => 'required|digits:10',
             'address'   => 'nullable|string|max:255',
-            'avatar'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar'    => 'nullable|image|max:2048',
         ], [
             'full_name.required' => 'Vui lòng nhập họ tên.',
             'phone.required'     => 'Vui lòng nhập số điện thoại.',
             'phone.digits'       => 'Số điện thoại phải bao gồm đúng 10 chữ số.',
-            'avatar.image'       => 'File tải lên phải là hình ảnh.',
+            'avatar.image'       => 'Ảnh chưa đúng định dạng .PNG, .JPG',
             'avatar.max'         => 'Ảnh không được vượt quá 2MB.',
         ]);
 

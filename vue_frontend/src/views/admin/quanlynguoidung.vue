@@ -14,6 +14,7 @@
             style="width: 70px; height: 40px; border-radius: 6px; object-fit: cover;"
             ><br>
           <input type="file" @change="onFileChange"/>
+          <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 13px;">* Định dạng cho phép: .JPG, .PNG; Ảnh không quá 2MB</small>
         </div>
         <div>
           <label>Username</label>
@@ -62,6 +63,7 @@
             style="width: 70px; height: 40px; border-radius: 6px; object-fit: cover;"
             ><br>
           <input type="file" @change="onNewFileChange"/>
+          <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 13px;">* Định dạng cho phép: .JPG, .PNG; Ảnh không quá 2MB</small>
         </div>
         <div>
           <label>Username</label>
@@ -295,6 +297,20 @@ export default {
       if (!selectedUser.value.address?.trim()) {
         return alert("Address không được để trống");
       }
+
+      if (avatarFile) {
+        // 1. Kiểm tra dung lượng (2MB = 2 * 1024 * 1024 bytes)
+        if (avatarFile.size > 2 * 1024 * 1024) {
+            return alert("Dung lượng ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
+        }
+
+        // 2. Kiểm tra định dạng (MIME types)
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(avatarFile.type)) {
+            return alert("Định dạng ảnh không hợp lệ! Chỉ chấp nhận file .JPG hoặc .PNG.");
+        }
+      }
+
       const formData = new FormData()
       // Do not append the avatar URL string (Laravel expects a file for 'avatar' when validating 'image').
       for (const key in selectedUser.value) {
@@ -397,6 +413,19 @@ export default {
 
       if (!newAdmin.value.current_admin_password?.trim()) {
         return alert("Bạn phải nhập password admin đang login để xác nhận");
+      }
+
+      if (newAvatarFile) {
+        // 1. Kiểm tra dung lượng (2MB)
+        if (newAvatarFile.size > 2 * 1024 * 1024) {
+             return alert("Dung lượng ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
+        }
+        
+        // 2. Kiểm tra định dạng
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(newAvatarFile.type)) {
+             return alert("Định dạng ảnh không hợp lệ! Chỉ chấp nhận file .JPG hoặc .PNG.");
+        }
       }
 
       const formData = new FormData()
