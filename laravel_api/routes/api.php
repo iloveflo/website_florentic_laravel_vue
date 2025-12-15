@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\OrderUserController;
 use App\Http\Controllers\Admin\CouponController;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/captcha', [AuthController::class, 'getCaptcha']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
@@ -109,3 +110,15 @@ Route::post('/reviews', [OrderController::class, 'storeReviews']);
 //AI
 Route::post('/chat', [ChatController::class, 'sendMessage']);
 Route::get('/chat/history', [ChatController::class, 'getHistory']);
+
+// Gọi avien
+Route::get('/wake-up-db', function () {
+    // Lệnh này bắt buộc Laravel phải kết nối vào Aiven
+    // Chỉ cần SELECT 1 là đủ để Aiven tính là "có hoạt động"
+    try {
+        DB::select('SELECT 1');
+        return response()->json(['status' => 'Database is awake!']);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'Error', 'message' => $e->getMessage()], 500);
+    }
+});
