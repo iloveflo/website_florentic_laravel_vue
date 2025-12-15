@@ -64,6 +64,6 @@ RUN composer install --no-dev --optimize-autoloader
 COPY --from=vue_builder /app/frontend/frontend ./public
 
 # 7. Phân quyền cho Laravel ghi log và cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
 
 EXPOSE 80
