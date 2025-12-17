@@ -292,6 +292,21 @@ const avatarPath = (path) => {
     height: 100vh;
 }
 
+.avatar {
+  /* 1. Kích thước nhỏ (tùy chỉnh số px bạn muốn) */
+  width: 40px;
+  height: 40px;
+
+  /* 2. Làm tròn */
+  border-radius: 50%;
+
+  /* 3. CỰC KỲ QUAN TRỌNG: Giúp ảnh không bị méo nếu ảnh gốc là hình chữ nhật */
+  object-fit: cover;
+  
+  /* 4. Thêm viền nhẹ cho đẹp (tùy chọn) */
+  border: 1px solid #ddd;
+}
+
 .user-info {
     text-align: center;
     padding-bottom: 20px;
