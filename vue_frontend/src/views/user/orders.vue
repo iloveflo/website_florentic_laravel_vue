@@ -150,7 +150,7 @@ export default {
         
         // Kiểm tra Session Params (URL hoặc Local)
         const urlSession = this.$route.query.session_id;
-        const localSession = localStorage.getItem('cart_session_id');
+        const localSession = sessionStorage.getItem('cart_session_id');
         this.hasSessionParam = !!(urlSession || localSession);
     },
     async fetchOrders() {
@@ -165,7 +165,7 @@ export default {
         
         // 2. Lấy session_id (Ưu tiên URL, sau đó đến LocalStorage)
         const urlSessionId = this.$route.query.session_id;
-        const localSessionId = localStorage.getItem('cart_session_id');
+        const localSessionId = sessionStorage.getItem('cart_session_id');
         this.hasSessionParam = !!(urlSessionId || localSessionId);
         // 3. Chuẩn bị params
         const params = { 
@@ -261,7 +261,7 @@ export default {
 
       try {
         const token = localStorage.getItem('token');
-        const sessionId = localStorage.getItem('cart_session_id');
+        const sessionId = sessionStorage.getItem('cart_session_id');
 
         const payload = {
           order_id: this.selectedOrder.id,

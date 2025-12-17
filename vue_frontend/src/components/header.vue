@@ -221,7 +221,7 @@ const handleSessionExpiredConfirm = async () => {
 const fetchCartCount = async () => {
   try {
     const token = localStorage.getItem('token');
-    const sessionId = localStorage.getItem('cart_session_id');
+    const sessionId = sessionStorage.getItem('cart_session_id');
 
     // Nếu không có gì thì reset về 0
     if (!token && !sessionId) {

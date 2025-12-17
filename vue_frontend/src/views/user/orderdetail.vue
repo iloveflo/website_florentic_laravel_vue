@@ -117,7 +117,7 @@ export default {
         const token = localStorage.getItem('token'); // Lấy Token nếu có
         const orderCode = this.$route.params.order_code;
         const urlSessionId = this.$route.query.session_id; 
-        const localSessionId = localStorage.getItem('cart_session_id');
+        const localSessionId = sessionStorage.getItem('cart_session_id');
         const sessionId = urlSessionId || localSessionId; // Ưu tiên URL
         // 3. Chuẩn bị Config
         const params = {};

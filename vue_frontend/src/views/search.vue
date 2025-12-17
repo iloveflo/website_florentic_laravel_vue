@@ -386,10 +386,10 @@ const decreaseQty = () => {
 }
 
 const getSessionId = () => {
-  let sessionId = localStorage.getItem('cart_session_id')
+  let sessionId = sessionStorage.getItem('cart_session_id')
   if (!sessionId) {
     sessionId = 'sess_' + Math.random().toString(36).substr(2, 9) + Date.now()
-    localStorage.setItem('cart_session_id', sessionId)
+    sessionStorage.setItem('cart_session_id', sessionId)
   }
   return sessionId
 }
@@ -455,7 +455,7 @@ const addQuickToCart = async () => {
     if (response.status === 200 || response.status === 201) {
       showToast('Đã thêm sản phẩm vào giỏ hàng!')
       if (response.data.data?.session_id) {
-        localStorage.setItem('cart_session_id', response.data.data.session_id)
+        sessionStorage.setItem('cart_session_id', response.data.data.session_id)
       }
       window.dispatchEvent(new Event('cart-updated'))
       showQuickView.value = false

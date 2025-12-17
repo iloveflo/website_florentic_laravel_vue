@@ -234,10 +234,10 @@ const formatCurrency = (value) => {
 
 // 2. Lấy Session ID (cho khách)
 const getSessionId = () => {
-  let sessionId = localStorage.getItem('cart_session_id');
+  let sessionId = sessionStorage.getItem('cart_session_id');
   if (!sessionId) {
     sessionId = 'sess_' + Math.random().toString(36).substr(2, 9) + Date.now();
-    localStorage.setItem('cart_session_id', sessionId);
+    sessionStorage.setItem('cart_session_id', sessionId);
   }
   return sessionId;
 };

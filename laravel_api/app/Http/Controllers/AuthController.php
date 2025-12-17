@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\CartSession;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rules\Password;
@@ -56,6 +57,7 @@ class AuthController extends Controller
             $expiresAt = now()->addHours(5);
             try {
                 PersonalAccessToken::where('expires_at', '<', now())->delete();
+                CartSession::where('updated_at', '<', now()->subDay())->delete();
             } catch (\Exception $e) {
                 Log::error('Lỗi dọn dẹp Token (Sanctum Prune): ' . $e->getMessage());
             }
