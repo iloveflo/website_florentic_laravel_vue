@@ -50,7 +50,7 @@ class ProfileController extends Controller
         // 1. Validate dữ liệu
         $request->validate([
             'full_name' => 'required|string|max:100',
-            'phone'     => 'required|digits:10',
+            'phone'     => 'required|digits:10|unique:users,phone',
             'address'   => 'nullable|string|max:255',
             'avatar'    => 'nullable|image|max:2048',
         ], [

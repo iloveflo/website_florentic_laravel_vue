@@ -166,7 +166,7 @@ class AuthController extends Controller
                 'max:100',
                 'regex:/^[\p{L}\s]+$/u' // \p{L} là mọi ký tự chữ cái (Unicode), u là hỗ trợ UTF-8
             ],
-            'phone'     => 'nullable|digits:10', // chỉ số, 10 chữ số
+            'phone'     => 'nullable|digits:10|unique:users,phone',
             'address'   => 'nullable|string|max:255',
             'avatar'    => 'nullable|image|max:2048', // tối đa 2MB
         ]);

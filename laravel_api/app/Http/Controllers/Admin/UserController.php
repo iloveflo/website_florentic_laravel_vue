@@ -205,7 +205,7 @@ class UserController extends Controller
             'password' => ['required','string','min:6'],
             'full_name' => 'required|string|max:100',
             'role' => 'nullable|in:admin,user',
-            'phone' => 'nullable|string|max:10',
+            'phone'     => ['nullable', 'string', 'max:10', Rule::unique('users', 'phone')],
             'address' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|max:2048',
         ]);
