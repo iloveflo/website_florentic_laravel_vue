@@ -1,32 +1,22 @@
 # ============================================
-# STAGE 1: Build VueJS (Chỉ dùng để build, không chạy)
+# STAGE 1: Build VueJS (Giữ nguyên không đổi)
 # ============================================
-FROM node:20-alpine as vue_builder
-
-# Tạo thư mục làm việc tạm
+FROM node:20-alpine AS vue_builder
 WORKDIR /app/frontend
-
-# 1. Copy file định nghĩa thư viện trước (để tận dụng Docker Cache)
 COPY vue_frontend/package*.json ./
-
-# 2. Cài thư viện Node
 RUN npm install
-
-# 3. Copy toàn bộ code Vue vào
 COPY vue_frontend/ .
-
-# 4. Build ra file tĩnh (kết quả nằm ở /app/frontend/dist)
 RUN npm run build
 
-
 # ============================================
-# STAGE 2: Build Laravel (Container chính sẽ chạy)
+# STAGE 2: Build Laravel với Nginx + PHP-FPM
 # ============================================
-FROM php:8.2-apache
+# 1. ĐỔI IMAGE GỐC: Dùng FPM thay vì Apache
+FROM php:8.2-fpm
 
 WORKDIR /var/www/html
 
-# 1. Cài đặt các thư viện hệ thống cần thiết cho Laravel & MySQL
+# 2. Cài đặt thư viện hệ thống + Nginx + Supervisor
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -35,35 +25,38 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    # 1. Cài thư viện hệ thống bắt buộc cho việc vẽ chữ và xử lý ảnh
     libfreetype6-dev \
     libjpeg62-turbo-dev \
-    # 2. CẤU HÌNH GD ĐỂ KÍCH HOẠT FREETYPE (Đây là dòng quan trọng nhất bạn đang thiếu)
+    # --- CÀI THÊM NGINX VÀ SUPERVISOR ---
+    nginx \
+    supervisor \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    # 3. Cài đặt extension
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql mbstring exif pcntl bcmath
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql mbstring exif pcntl bcmath \
+    # Dọn dẹp cache apt để giảm dung lượng image
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Bật Mod Rewrite của Apache để Laravel chạy URL đẹp
-RUN a2enmod rewrite
+# 3. Cấu hình PHP-FPM & Nginx
+# Copy file cấu hình Nginx từ máy bạn vào vị trí mặc định của Nginx
+COPY docker-conf/nginx.conf /etc/nginx/sites-available/default
+# Copy file cấu hình Supervisor
+COPY docker-conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# 3. Cấu hình Apache trỏ thẳng vào thư mục public của Laravel
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
-
-# 4. Copy Code Laravel từ máy thật vào Container
+# 4. Copy Code Laravel
 COPY laravel_api/ .
 
 # 5. Cài đặt Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# 6. --- QUAN TRỌNG NHẤT ---
-# Lấy kết quả build từ STAGE 1 (folder frontend) chép đè vào folder public của Laravel
-# Copy tất cả file trong frontend (index.html, assets/...) vào public/
+# 6. Copy Code Vue đã build từ Stage 1
 COPY --from=vue_builder /app/frontend/frontend ./public
 
-# 7. Phân quyền cho Laravel ghi log và cache
+# 7. Phân quyền (Quan trọng: Nginx thường chạy user www-data giống Apache)
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
 
+# 8. Mở port 80
 EXPOSE 80
+
+# 9. LỆNH KHỞI CHẠY MỚI
+# Thay vì apache2-foreground, ta chạy supervisor để nó quản lý cả Nginx và PHP
+CMD ["/usr/bin/supervisord"]

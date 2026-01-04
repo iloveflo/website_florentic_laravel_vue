@@ -13,11 +13,6 @@ use InvalidArgumentException;
  * ===================================================================
  * REPORT SERVICE - DỊCH VỤ CHÍNH XỬ LÝ BÁO CÁO DOANH THU FLORENTIC
  * ===================================================================
- * 
- * - Tất cả logic báo cáo nằm ở đây → Controller cực mỏng
- * - Validate đầu vào ngay từ service (defense in depth)
- * - Comment tiếng Việt chi tiết từng dòng
- * - Dễ viết unit test (không phụ thuộc request)
  */
 class ReportService
 {
