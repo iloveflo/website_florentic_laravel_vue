@@ -350,7 +350,7 @@ website_florentic_laravel_vue/
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/<your-username>/website_florentic_laravel_vue.git
+git clone https://github.com/iloveflo/website_florentic_laravel_vue.git
 cd website_florentic_laravel_vue
 
 # 2. Khởi chạy với Docker Compose
@@ -446,16 +446,16 @@ npm run build
 | **OAuth – Google** | | |
 | `GOOGLE_CLIENT_ID` | Google OAuth Client ID | |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | |
-| `GOOGLE_REDIRECT_URI` | Google callback URL | `https://your-domain/auth/google/callback` |
+| `GOOGLE_REDIRECT_URI` | Google callback URL |
 | **OAuth – Facebook** | | |
 | `FACEBOOK_CLIENT_ID` | Facebook App ID | |
 | `FACEBOOK_CLIENT_SECRET` | Facebook App Secret | |
-| `FACEBOOK_REDIRECT_URI` | Facebook callback URL | `https://your-domain/auth/facebook/callback` |
+| `FACEBOOK_REDIRECT_URI` | Facebook callback URL |
 | **VNPay** | | |
 | `VNP_TMN_CODE` | Mã website trên VNPay | |
 | `VNP_HASH_SECRET` | Chuỗi bí mật VNPay | |
 | `VNP_URL` | URL thanh toán VNPay | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` |
-| `VNP_RETURN_URL` | URL callback sau thanh toán | `https://your-domain/api/payment/vnpay-callback` |
+| `VNP_RETURN_URL` | URL callback sau thanh toán |
 
 ---
 
