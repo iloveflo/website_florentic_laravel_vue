@@ -2,6 +2,8 @@
 
 <p align="center">
   <strong>Website thương mại điện tử full-stack được xây dựng với Laravel 12 & Vue 3</strong>
+  <br>
+  Dự án này chỉ mang tính chất học tập và tham khảo, không được sử dụng cho mục đích thương mại.
 </p>
 
 <p align="center">
